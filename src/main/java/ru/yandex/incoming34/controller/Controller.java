@@ -23,7 +23,7 @@ public class Controller {
 
     @PostMapping(value = "/new_weather_report")
     @Operation(description = "Эндпойнт, вызываемый гипотетическим Сервисом А, и принимающий от него сообщения для последующей обработки Адаптером.")
-    public JsonNode handleMessageFromServiceA(@RequestBody UserRequest userRequest) throws Exception {
+    public JsonNode handleMessageFromServiceA(@RequestBody UserRequest userRequest) {
         validationService.throwExceptionIfInvalid(userRequest);
         Optional<JsonNode> responseOptional = weatherProvider.requestWeather(userRequest);
         if (responseOptional.isPresent()) return responseOptional.get();

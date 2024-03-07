@@ -40,13 +40,12 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
 
     private HttpURLConnection prepareConnection(UserRequest userRequest) {
         String request = new StringBuilder(properties.getProperty("apiHttp"))
-                .append("?")
-                .append("lat=")
+                .append("?lat=")
                 .append(userRequest.getCoordinates().getLatitude())
                 .append("&lon=")
                 .append(userRequest.getCoordinates().getLongitude())
                 .append("&appid=")
-                .append(properties.getProperty("appId"))
+                .append(properties.getProperty("apiKey"))
                 .append("&lang=")
                 .append(userRequest.getLng().name())
                 .append("&units=")
