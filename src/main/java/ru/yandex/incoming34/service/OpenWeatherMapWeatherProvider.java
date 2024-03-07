@@ -49,7 +49,8 @@ public class OpenWeatherMapWeatherProvider /*implements WeatherProvider*/ {
                 .append(properties.getProperty("appId"))
                 .append("&lang=")
                 .append(userRequest.getLng().name())
-                .append("&units=metric")
+                .append("&units=")
+                .append(userRequest.getMetrics().name())
                 .toString();
         URL url;
         HttpURLConnection connection;
@@ -57,7 +58,7 @@ public class OpenWeatherMapWeatherProvider /*implements WeatherProvider*/ {
             url = new URL(request);
             connection = (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
-            throw new RuntimeException("Не удалось подключиться к серверу - поставщику сведений о температуре");
+            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
         }
         connection.setRequestProperty("accept", "application/json");
         return connection;

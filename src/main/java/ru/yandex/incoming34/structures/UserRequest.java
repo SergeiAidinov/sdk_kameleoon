@@ -9,6 +9,7 @@ import lombok.Getter;
 public class UserRequest {
 
     private final Languages lng;
+    private final Metrics metrics;
     @Valid
     private final Coordinates coordinates;
 }
