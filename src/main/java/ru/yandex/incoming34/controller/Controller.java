@@ -21,11 +21,11 @@ public class Controller {
     private final WeatherProvider weatherProvider;
     private final ValidationService validationService;
 
-    @PostMapping(value = "/new_weather_report")
+    @GetMapping(value = "/new_weather_report")
     @Operation(description = "Эндпойнт, вызываемый гипотетическим Сервисом А, и принимающий от него сообщения для последующей обработки Адаптером.")
-    public JsonNode handleMessageFromServiceA(@RequestBody UserRequest userRequest) {
-        validationService.throwExceptionIfInvalid(userRequest);
-        Optional<JsonNode> responseOptional = weatherProvider.requestWeather(userRequest);
+    public JsonNode handleMessageFromServiceA(String cityName) {
+        //validationService.throwExceptionIfInvalid(userRequest);
+        Optional<JsonNode> responseOptional = weatherProvider.requestWeather(cityName);
         if (responseOptional.isPresent()) return responseOptional.get();
         throw new RuntimeException(sdkKameleoonErrors.get("NO_DATA"));
     }

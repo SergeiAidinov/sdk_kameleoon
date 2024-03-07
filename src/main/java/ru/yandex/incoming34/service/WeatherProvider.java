@@ -6,5 +6,5 @@ import ru.yandex.incoming34.structures.UserRequest;
 import java.util.Optional;
 
 public interface WeatherProvider {
-    Optional<JsonNode> requestWeather(UserRequest userRequest);
+    Optional<JsonNode> requestWeather(String cityName);
 }

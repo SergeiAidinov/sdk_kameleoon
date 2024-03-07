@@ -11,14 +11,17 @@ public class Config {
 
     @Value("${app.apiKey}")
     private String apiKey;
-    @Value("${app.apihttp}")
-    private String apiHttp;
+    @Value("${app.apiHttpCoordinates}")
+    private String apiHttpCoordinates;
+    @Value("${app.apihttpWeather}")
+    private String apiHttpWeather;
 
     @Bean
     public Properties properties(){
         Properties properties = new Properties();
         properties.setProperty("apiKey", apiKey);
-        properties.setProperty("apiHttp", apiHttp);
+        properties.setProperty("apiHttpCoordinates", apiHttpCoordinates);
+        properties.setProperty("apiHttpWeather", apiHttpWeather);
         return properties;
     }
 }

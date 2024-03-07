@@ -23,33 +23,63 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    public Optional<JsonNode> requestWeather(UserRequest userRequest) {
-        HttpURLConnection connection = prepareConnection(userRequest);
+    public Optional<JsonNode> requestWeather(String cityName) {
+        HttpURLConnection connection = prepareConnectionByCityName(cityName);
         InputStream responseStream;
-        JsonNode weatherNode;
+        JsonNode node;
         try {
             responseStream = connection.getInputStream();
-            weatherNode = objectMapper.readTree(responseStream);
+            node = objectMapper.readTree(responseStream);
+        } catch (Exception exception) {
+            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
+        } /*finally {
+            connection.disconnect();
+        }*/
+        String latitude = String.valueOf(node.get(0).get("lat"));
+        String longitude = String.valueOf(node.get(0).get("lon"));
+        connection = prepareConnection(latitude, longitude);
+        try {
+            responseStream = connection.getInputStream();
+            node = objectMapper.readTree(responseStream);
         } catch (Exception exception) {
             throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
         } finally {
             connection.disconnect();
         }
-        return Optional.ofNullable(weatherNode);
+        return Optional.ofNullable(node);
     }
 
-    private HttpURLConnection prepareConnection(UserRequest userRequest) {
-        String request = new StringBuilder(properties.getProperty("apiHttp"))
+    private HttpURLConnection prepareConnection( String latitude, String longitude) {
+        String request = new StringBuilder(properties.getProperty("apiHttpWeather"))
                 .append("?lat=")
-                .append(userRequest.getCoordinates().getLatitude())
+                .append(latitude)
                 .append("&lon=")
-                .append(userRequest.getCoordinates().getLongitude())
+                .append(longitude)
                 .append("&appid=")
                 .append(properties.getProperty("apiKey"))
                 .append("&lang=")
-                .append(userRequest.getLng().name())
+                .append("en")
                 .append("&units=")
-                .append(userRequest.getMetrics().name())
+                .append("metric")
+                .toString();
+        URL url;
+        HttpURLConnection connection;
+        try {
+            url = new URL(request);
+            connection = (HttpURLConnection) url.openConnection();
+        } catch (IOException e) {
+            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
+        }
+        connection.setRequestProperty("accept", "application/json");
+        return connection;
+    }
+
+    private HttpURLConnection prepareConnectionByCityName(String cityName) {
+        String request = new StringBuilder(properties.getProperty("apiHttpCoordinates"))
+                .append(cityName)
+                .append("&limit=1")
+                .append("&appid=")
+                .append(properties.getProperty("apiKey"))
                 .toString();
         URL url;
         HttpURLConnection connection;
