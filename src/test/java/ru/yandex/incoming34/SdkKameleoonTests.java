@@ -1,4 +1,4 @@
-package ru.yandex.incoming34.test_task_for_employment;
+package ru.yandex.incoming34;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

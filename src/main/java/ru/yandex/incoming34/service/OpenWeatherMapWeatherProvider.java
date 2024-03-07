@@ -1,54 +1,55 @@
-package ru.yandex.incoming34.test_task_for_employment.service;
+package ru.yandex.incoming34.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
-import ru.yandex.incoming34.test_task_for_employment.structures.Coordinates;
+import org.springframework.stereotype.Service;
+import ru.yandex.incoming34.structures.Coordinates;
+import ru.yandex.incoming34.structures.UserRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
-import static ru.yandex.incoming34.test_task_for_employment.utils.Utils.findNode;
-@AllArgsConstructor
-public class OpenWeatherMapTemperatureProvider implements TemperatureProvider{
+import static ru.yandex.incoming34.controller.SdkKameleoonControllerExceptionHandler.sdkKameleoonErrors;
 
-    private List<String> nodeList;
+@AllArgsConstructor
+@Service
+public class OpenWeatherMapWeatherProvider /*implements WeatherProvider*/ {
+
     private final Properties properties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    @Override
-    public Optional<String> requestTemperature(Coordinates coordinates) {
-        HttpURLConnection connection = prepareConnection(coordinates);
+    public Optional<JsonNode> requestWheather(UserRequest userRequest) {
+        HttpURLConnection connection = prepareConnection(userRequest);
         InputStream responseStream;
-        JsonNode root;
+        JsonNode weatherNode;
         try {
             responseStream = connection.getInputStream();
-            root = objectMapper.readTree(responseStream);
+            weatherNode = objectMapper.readTree(responseStream);
         } catch (Exception exception) {
-            throw new RuntimeException("Не удалось получить информацию о погоде");
+            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
         } finally {
             connection.disconnect();
         }
-        return findNode(root, new ArrayList<>(nodeList));
+        return Optional.ofNullable(weatherNode);
     }
 
-    private HttpURLConnection prepareConnection(Coordinates coordinates) {
+    private HttpURLConnection prepareConnection(UserRequest userRequest) {
         String request = new StringBuilder(properties.getProperty("apiHttp"))
                 .append("?")
                 .append("lat=")
-                .append(coordinates.getLatitude())
+                .append(userRequest.getCoordinates().getLatitude())
                 .append("&lon=")
-                .append(coordinates.getLongitude())
+                .append(userRequest.getCoordinates().getLongitude())
                 .append("&appid=")
                 .append(properties.getProperty("appId"))
-                .append("&lang=ru&")
-                .append("units=metric")
+                .append("&lang=")
+                .append(userRequest.getLng().name())
+                .append("&units=metric")
                 .toString();
         URL url;
         HttpURLConnection connection;

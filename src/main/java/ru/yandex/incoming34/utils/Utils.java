@@ -1,4 +1,4 @@
-package ru.yandex.incoming34.test_task_for_employment.utils;
+package ru.yandex.incoming34.utils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 

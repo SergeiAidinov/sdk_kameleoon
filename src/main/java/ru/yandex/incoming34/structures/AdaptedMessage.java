@@ -1,4 +1,4 @@
-package ru.yandex.incoming34.test_task_for_employment.structures;
+package ru.yandex.incoming34.structures;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
