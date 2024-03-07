@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
-import ru.yandex.incoming34.structures.Coordinates;
 import ru.yandex.incoming34.structures.UserRequest;
 
 import java.io.IOException;
@@ -18,12 +17,13 @@ import static ru.yandex.incoming34.controller.SdkKameleoonControllerExceptionHan
 
 @AllArgsConstructor
 @Service
-public class OpenWeatherMapWeatherProvider /*implements WeatherProvider*/ {
+public class OpenWeatherMapWeatherProvider implements WeatherProvider {
 
     private final Properties properties;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public Optional<JsonNode> requestWheather(UserRequest userRequest) {
+    @Override
+    public Optional<JsonNode> requestWeather(UserRequest userRequest) {
         HttpURLConnection connection = prepareConnection(userRequest);
         InputStream responseStream;
         JsonNode weatherNode;
