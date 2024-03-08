@@ -7,7 +7,6 @@ import org.springframework.cache.annotation.EnableCaching;
 import java.util.TimeZone;
 
 @SpringBootApplication
-@EnableCaching
 public class SdkKameleoon {
 
 	public static void main(String[] args) {

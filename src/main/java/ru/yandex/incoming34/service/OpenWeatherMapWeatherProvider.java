@@ -6,11 +6,13 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import ru.yandex.incoming34.structures.WeatherInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -21,27 +23,28 @@ import static ru.yandex.incoming34.controller.SdkKameleoonControllerExceptionHan
 public class OpenWeatherMapWeatherProvider implements WeatherProvider {
 
     private final Properties properties;
+    private final InMemoryRepository inMemoryRepository;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
-    @Cacheable("weather")
     public Optional<JsonNode> requestWeather(String cityName) {
         HttpURLConnection connection = prepareConnectionByCityName(cityName);
         InputStream responseStream;
         JsonNode node;
+        Pair<String, String> cordinates;
         try {
             responseStream = connection.getInputStream();
             node = objectMapper.readTree(responseStream);
-            Pair<String, String> cordinates = Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
+            cordinates = Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
             connection = prepareConnectionByCoordinates(cordinates);
             responseStream = connection.getInputStream();
             node = objectMapper.readTree(responseStream);
         } catch (Exception exception) {
             throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
-        }
-        finally {
+        } finally {
             connection.disconnect();
         }
+        inMemoryRepository.putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node, cordinates));
         return Optional.ofNullable(node);
     }
 
