@@ -78,9 +78,11 @@ public class OpenWeatherMapMainService implements MainService {
             InputStream responseStream = connection.getInputStream();
             JsonNode node = objectMapper.readTree(responseStream);
             if (node.isEmpty()) {
-                throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
+                throw new RuntimeException();
             }
             return Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
+        } catch (RuntimeException runtimeException) {
+            throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
         } catch (Exception e) {
             throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
         } finally {

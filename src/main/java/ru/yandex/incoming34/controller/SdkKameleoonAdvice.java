@@ -10,8 +10,6 @@ import java.util.Objects;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-
-
 @ControllerAdvice(annotations = SdkKameleoonControllerExceptionHandler.class)
 public class SdkKameleoonAdvice {
 
