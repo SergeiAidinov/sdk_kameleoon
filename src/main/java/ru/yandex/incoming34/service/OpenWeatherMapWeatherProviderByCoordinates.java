@@ -39,7 +39,7 @@ public class OpenWeatherMapWeatherProviderByCoordinates implements WeatherProvid
     }
 
     private HttpURLConnection prepareConnectionByCoordinates(Pair<String, String> coordinates) {
-        String request = new StringBuilder(properties.getProperty("app.apihttpWeather"))
+        String request = new StringBuilder(properties.getProperty("app.apiHttpWeather"))
                 .append("?lat=")
                 .append(coordinates.getLeft())
                 .append("&lon=")
