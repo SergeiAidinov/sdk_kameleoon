@@ -19,7 +19,7 @@ import static ru.yandex.incoming34.utils.Utils.getHttpURLConnection;
 @Service
 @AllArgsConstructor
 @Getter
-public class OpenWeatherMapWeatherProviderByCoordinate implements WeatherProviderByCoordinate {
+public class OpenWeatherMapWeatherProviderByCoordinates implements WeatherProviderByCoordinates {
 
     private final Properties properties;
     private final ObjectMapper objectMapper = new ObjectMapper();

@@ -5,6 +5,6 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Optional;
 
-public interface WeatherProviderByCoordinate {
+public interface WeatherProviderByCoordinates {
     Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates, String cityName);
 }

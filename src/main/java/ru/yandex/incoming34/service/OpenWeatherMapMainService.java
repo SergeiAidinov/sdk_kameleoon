@@ -27,18 +27,19 @@ import static ru.yandex.incoming34.utils.Utils.getHttpURLConnection;
 
 @Service
 @RequiredArgsConstructor
-public class SdkKameleoonCache {
+public class OpenWeatherMapMainService implements MainService {
 
     private final Properties properties;
-    private final WeatherProviderByCoordinate weatherProviderByCoordinate;
+    private final WeatherProviderByCoordinates weatherProviderByCoordinates;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ConcurrentHashMap<String, WeatherInfo> cachedRepo = new ConcurrentHashMap<>();
-    private final Logger logger = Logger.getLogger(SdkKameleoonCache.class.getSimpleName());
+    private final Logger logger = Logger.getLogger(OpenWeatherMapMainService.class.getSimpleName());
 
+    @Override
     public Optional<JsonNode> getActualWeather(String cityName) {
         WeatherInfo weatherInfo = cachedRepo.get(cityName);
         if (Objects.nonNull(weatherInfo)) {
-            if (weatherInfo.getLocalDateTime().isAfter(LocalDateTime.now().minusMinutes(Integer.valueOf(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
+            if (weatherInfo.getLocalDateTime().isAfter(LocalDateTime.now().minusMinutes(Integer.parseInt(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
                 logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo);
                 return Optional.of(weatherInfo.getJsonNode());
             } else {
@@ -52,13 +53,13 @@ public class SdkKameleoonCache {
     private Optional<JsonNode> actualizeInfoForCity(String cityName) {
         WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
         logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
-        Optional<JsonNode> nodeOptional = weatherProviderByCoordinate.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
+        Optional<JsonNode> nodeOptional = weatherProviderByCoordinates.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCoordinates()));
         return nodeOptional;
     }
 
     private Optional<JsonNode> actualizeInfoByCoordinates(Pair<String, String> coordinates, String cityName) {
-        Optional<JsonNode> nodeOptional = weatherProviderByCoordinate.findWeatherByCoordinates(coordinates, cityName);
+        Optional<JsonNode> nodeOptional = weatherProviderByCoordinates.findWeatherByCoordinates(coordinates, cityName);
         logger.log(Level.INFO, "Refreshing info in cache for city of " + cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), coordinates));
         return nodeOptional;
@@ -66,7 +67,7 @@ public class SdkKameleoonCache {
 
     private Optional<JsonNode> addInfoOfNewCity(String cityName) {
         Pair<String, String> coordinatesByCityName = findCoordinatesByCityName(cityName);
-        Optional<JsonNode> node = weatherProviderByCoordinate.findWeatherByCoordinates(coordinatesByCityName, cityName);
+        Optional<JsonNode> node = weatherProviderByCoordinates.findWeatherByCoordinates(coordinatesByCityName, cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node.get(), coordinatesByCityName));
         return node;
     }
@@ -104,7 +105,7 @@ public class SdkKameleoonCache {
     }
 
     private void removeExceedingRecords() {
-        if (cachedRepo.size() > Integer.valueOf(properties.getProperty("app.cache.size"))) {
+        if (cachedRepo.size() > Integer.parseInt(properties.getProperty("app.cache.size"))) {
             Pair<String, LocalDateTime> oldestRecord = getOldestRecord();
             WeatherInfo removedWeatherInfo = cachedRepo.remove(oldestRecord.getLeft());
             logger.log(Level.INFO, "Removed from cache out of size record: " + oldestRecord.getLeft() + " " + removedWeatherInfo.toString());
@@ -148,7 +149,7 @@ public class SdkKameleoonCache {
         logger.log(Level.INFO, "Cache eviction started: " + LocalDateTime.now());
         for (Map.Entry<String, WeatherInfo> entry : cachedRepo.entrySet()) {
             if (entry.getValue().getLocalDateTime()
-                    .isBefore(LocalDateTime.now().minusMinutes(Integer.valueOf(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
+                    .isBefore(LocalDateTime.now().minusMinutes(Integer.parseInt(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
                 WeatherInfo removedWeatherInfo = cachedRepo.remove(entry.getKey());
                 logger.log(Level.INFO, "Removed from cache expired record: " + entry.getKey() + " " + removedWeatherInfo.toString());
             }
