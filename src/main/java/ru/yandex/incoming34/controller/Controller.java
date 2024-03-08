@@ -8,8 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import ru.yandex.incoming34.exception.SdkKameleoonException;
-import ru.yandex.incoming34.service.ValidationService;
-import ru.yandex.incoming34.service.WeatherProvider;
+import ru.yandex.incoming34.service.WeatherProviderByCityName;
 import ru.yandex.incoming34.structures.SdkKameleoonErrors;
 
 import java.util.Optional;
@@ -20,14 +19,12 @@ import java.util.Optional;
 @SdkKameleoonControllerExceptionHandler
 public class Controller {
 
-    private final WeatherProvider weatherProvider;
-    private final ValidationService validationService;
-
+    private final WeatherProviderByCityName weatherProviderByCityName;
 
     @GetMapping(value = "/new_weather_report")
     @Operation(description = "Endpoint accepts the name of the city and return information about the weather at the current moment.")
     public JsonNode handleMessageFromServiceA(@Schema(example = "London") String cityName) {
-        Optional<JsonNode> responseOptional = weatherProvider.requestWeather(cityName);
+        Optional<JsonNode> responseOptional = weatherProviderByCityName.requestWeather(cityName);
         if (responseOptional.isPresent()) {
             return responseOptional.get();
         } else

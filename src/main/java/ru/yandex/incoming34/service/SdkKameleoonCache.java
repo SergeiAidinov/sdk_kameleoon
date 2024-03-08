@@ -14,60 +14,59 @@ import ru.yandex.incoming34.structures.WeatherInfo;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.util.stream.Collectors.groupingBy;
 import static ru.yandex.incoming34.utils.Utils.getHttpURLConnection;
 
 @Service
 @RequiredArgsConstructor
-public class InMemoryRepository {
+public class SdkKameleoonCache {
 
     private final Properties properties;
-    private final CoordinateService coordinateService;
-    //private final WeatherProvider weatherProvider;
+    private final WeatherProviderByCoordinate weatherProviderByCoordinate;
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final ConcurrentHashMap<String, WeatherInfo> cachedRepo = new ConcurrentHashMap<>();
-    private final Logger logger = Logger.getLogger(InMemoryRepository.class.getSimpleName());
+    private final Logger logger = Logger.getLogger(SdkKameleoonCache.class.getSimpleName());
 
     public Optional<JsonNode> getActualWeather(String cityName) {
         WeatherInfo weatherInfo = cachedRepo.get(cityName);
         if (Objects.nonNull(weatherInfo)) {
             if (weatherInfo.getLocalDateTime().isAfter(LocalDateTime.now().minusMinutes(Integer.valueOf(properties.getProperty("retention"))))) {
-                logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo.toString());
+                logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo);
                 return Optional.of(weatherInfo.getJsonNode());
             } else {
                 return actualizeInfoForCity(cityName);
             }
         } else {
-          return addInfoOfNewCity(cityName);
+            return addInfoOfNewCity(cityName);
         }
-        //return Optional.empty();
     }
 
     private Optional<JsonNode> actualizeInfoForCity(String cityName) {
         WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
         logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
-        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
+        Optional<JsonNode> nodeOptional = weatherProviderByCoordinate.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCoordinates()));
         return nodeOptional;
     }
 
     private Optional<JsonNode> actualizeInfoByCoordinates(Pair<String, String> coordinates, String cityName) {
-        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(coordinates, cityName);
+        Optional<JsonNode> nodeOptional = weatherProviderByCoordinate.findWeatherByCoordinates(coordinates, cityName);
         logger.log(Level.INFO, "Refreshing info in cache for city of " + cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), coordinates));
         return nodeOptional;
     }
 
-
-    private Optional<JsonNode> addInfoOfNewCity(String cityName){
+    private Optional<JsonNode> addInfoOfNewCity(String cityName) {
         Pair<String, String> coordinatesByCityName = findCoordinatesByCityName(cityName);
-        Optional<JsonNode> node = coordinateService.findWeatherByCoordinates(coordinatesByCityName, cityName);
+        Optional<JsonNode> node = weatherProviderByCoordinate.findWeatherByCoordinates(coordinatesByCityName, cityName);
         putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node.get(), coordinatesByCityName));
         return node;
     }
@@ -98,18 +97,6 @@ public class InMemoryRepository {
         return getHttpURLConnection(request);
     }
 
-   /* private HttpURLConnection getHttpURLConnection(String request) {
-        HttpURLConnection connection;
-        try {
-            URL url = new URL(request);
-            connection = (HttpURLConnection) url.openConnection();
-        } catch (IOException e) {
-            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
-        }
-        connection.setRequestProperty("accept", "application/json");
-        return connection;
-    }*/
-
     public void putWeatherInfo(String cityName, WeatherInfo weatherInfo) {
         cachedRepo.put(cityName, weatherInfo);
         logger.log(Level.INFO, "Put into cache: " + cityName + " " + weatherInfo.toString());
@@ -137,32 +124,25 @@ public class InMemoryRepository {
         return oldestRecord;
     }
 
-    @Scheduled(/*initialDelayString = "${app.cache.retention.timeInMinutes}",*/
+    @Scheduled(initialDelayString = "${app.cache.retention.timeInMinutes}",
             fixedDelayString = "${app.cache.retention.timeInMinutes}",
             timeUnit = TimeUnit.MINUTES)
-    private void refreshCache(){
+    private void refreshCache() {
         if (properties.getProperty("cacheMode").equals(CacheMode.on_demand.name())) {
             removeOldWeatherInfo();
-        } else if (properties.getProperty("cacheMode").equals(CacheMode.polling.name())){
+        } else if (properties.getProperty("cacheMode").equals(CacheMode.polling.name())) {
             actualizeCache();
         }
     }
 
     private void actualizeCache() {
-        LocalDateTime deadLine = LocalDateTime.now()
-                .minusMinutes(Integer.valueOf(properties.getProperty("retention")));
-                //.plusSeconds(5);
-        logger.log(Level.INFO, "Cache actualization started: " + LocalDateTime.now() + " Deadline: " + deadLine);
-
+        logger.log(Level.INFO, "Cache actualization started: " + LocalDateTime.now());
         for (String cityName : cachedRepo.keySet()) {
             Pair<String, String> coordinates = cachedRepo.get(cityName).getCoordinates();
-            if (Objects.nonNull(coordinates)) {
-                if (cachedRepo.get(cityName).getLocalDateTime().isBefore(deadLine)) actualizeInfoByCoordinates(coordinates, cityName);
-            }
+            if (Objects.nonNull(coordinates)) actualizeInfoByCoordinates(coordinates, cityName);
         }
         logger.log(Level.INFO, "Cache actualization finished: " + LocalDateTime.now());
     }
-
 
     private void removeOldWeatherInfo() {
         logger.log(Level.INFO, "Cache eviction started: " + LocalDateTime.now());
