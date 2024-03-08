@@ -23,7 +23,7 @@ public class OpenApiConfig {
 
     @Bean
     Info info() {
-        return new Info().title("Software development kit (SDK) that can be used by" +
+        return new Info().title("Software development kit (SDK) that can be used by " +
                         "other developers to easily access a weather API and retrieve weather data for a given location." +
                         " Author: Sergei Aidinov")
                 .description("Wheather info provider: https://openweathermap.org/")
