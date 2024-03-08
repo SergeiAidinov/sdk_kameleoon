@@ -14,5 +14,5 @@ public class WeatherInfo {
 
     private final LocalDateTime localDateTime;
     private final JsonNode jsonNode;
-    private final Pair<String, String> cordinates;
+    private final Pair<String, String> coordinates;
 }

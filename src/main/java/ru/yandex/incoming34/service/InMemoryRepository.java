@@ -52,10 +52,18 @@ public class InMemoryRepository {
     private Optional<JsonNode> actualizeInfoForCity(String cityName) {
         WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
         logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
-        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(removedWeatherInfo.getCordinates(), cityName);
-        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCordinates()));
+        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
+        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCoordinates()));
         return nodeOptional;
     }
+
+    private Optional<JsonNode> actualizeInfoByCoordinates(Pair<String, String> coordinates, String cityName) {
+        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(coordinates, cityName);
+        logger.log(Level.INFO, "Refreshing info in cache for city of " + cityName);
+        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), coordinates));
+        return nodeOptional;
+    }
+
 
     private Optional<JsonNode> addInfoOfNewCity(String cityName){
         Pair<String, String> coordinatesByCityName = findCoordinatesByCityName(cityName);
@@ -129,7 +137,7 @@ public class InMemoryRepository {
         return oldestRecord;
     }
 
-    @Scheduled(initialDelayString = "${app.cache.retention.timeInMinutes}",
+    @Scheduled(/*initialDelayString = "${app.cache.retention.timeInMinutes}",*/
             fixedDelayString = "${app.cache.retention.timeInMinutes}",
             timeUnit = TimeUnit.MINUTES)
     private void refreshCache(){
@@ -141,12 +149,18 @@ public class InMemoryRepository {
     }
 
     private void actualizeCache() {
+        LocalDateTime deadLine = LocalDateTime.now()
+                .minusMinutes(Integer.valueOf(properties.getProperty("retention")));
+                //.plusSeconds(5);
+        logger.log(Level.INFO, "Cache actualization started: " + LocalDateTime.now() + " Deadline: " + deadLine);
+
         for (String cityName : cachedRepo.keySet()) {
-            Pair<String, String> coordinates = cachedRepo.get(cityName).getCordinates();
+            Pair<String, String> coordinates = cachedRepo.get(cityName).getCoordinates();
             if (Objects.nonNull(coordinates)) {
-                //Optional<JsonNode> node =
+                if (cachedRepo.get(cityName).getLocalDateTime().isBefore(deadLine)) actualizeInfoByCoordinates(coordinates, cityName);
             }
         }
+        logger.log(Level.INFO, "Cache actualization finished: " + LocalDateTime.now());
     }
 
 
