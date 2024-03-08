@@ -1,20 +1,17 @@
 package ru.yandex.incoming34.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.JsonSerializable;
-import com.fasterxml.jackson.databind.node.NullNode;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.web.bind.annotation.*;
-import ru.yandex.incoming34.service.InMemoryRepository;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+import ru.yandex.incoming34.exception.SdkKameleoonException;
 import ru.yandex.incoming34.service.ValidationService;
 import ru.yandex.incoming34.service.WeatherProvider;
-import ru.yandex.incoming34.structures.UserRequest;
+import ru.yandex.incoming34.structures.SdkKameleoonErrors;
 
 import java.util.Optional;
-
-import static ru.yandex.incoming34.controller.SdkKameleoonControllerExceptionHandler.sdkKameleoonErrors;
 
 @RestController
 @RequestMapping("/api")
@@ -34,6 +31,6 @@ public class Controller {
         if (responseOptional.isPresent()) {
             return responseOptional.get();
         } else
-            throw new RuntimeException(sdkKameleoonErrors.get("NO_DATA"));
+            throw new SdkKameleoonException(SdkKameleoonErrors.NO_DATA);
     }
 }

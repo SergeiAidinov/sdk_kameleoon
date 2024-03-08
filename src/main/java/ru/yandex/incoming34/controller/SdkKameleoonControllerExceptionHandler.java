@@ -11,10 +11,10 @@ import java.util.Map;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface SdkKameleoonControllerExceptionHandler {
 
-    Map<String, String> sdkKameleoonErrors = Map.of(
+   /* Map<String, String> sdkKameleoonErrors = Map.of(
             "REQUEST_INVALID", "Invalid user request",
             "NO_DATA", "No Weather report provided",
             "WEATHER_SERVICE_UNAVAILABLE", "Weather service is unavailable",
             "CITY_NOT_FOUND", "City not found: "
-    );
+    );*/
 }

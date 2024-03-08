@@ -4,8 +4,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import ru.yandex.incoming34.exception.SdkKameleoonException;
+import ru.yandex.incoming34.structures.SdkKameleoonErrors;
 import ru.yandex.incoming34.structures.WeatherInfo;
 
 import java.io.IOException;
@@ -16,7 +17,6 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.Properties;
 
-import static ru.yandex.incoming34.controller.SdkKameleoonControllerExceptionHandler.sdkKameleoonErrors;
 
 @AllArgsConstructor
 @Service
@@ -45,10 +45,10 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
             responseStream = connection.getInputStream();
             node = objectMapper.readTree(responseStream);
         } catch (RuntimeException runtimeException) {
-            throw new RuntimeException(sdkKameleoonErrors.get("CITY_NOT_FOUND") + cityName);
+            throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
         }
         catch (Exception exception) {
-            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
+            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
         } finally {
             connection.disconnect();
         }
@@ -79,7 +79,7 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
             url = new URL(request);
             connection = (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
-            throw new RuntimeException(sdkKameleoonErrors.get("WEATHER_SERVICE_UNAVAILABLE"));
+            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
         }
         connection.setRequestProperty("accept", "application/json");
         return connection;
