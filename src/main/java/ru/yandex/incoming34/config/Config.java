@@ -30,14 +30,8 @@ public class Config {
         properties.setProperty("apiKey", apiKey);
         properties.setProperty("apiHttpCoordinates", apiHttpCoordinates);
         properties.setProperty("apiHttpWeather", apiHttpWeather);
-        //properties.setProperty("retention", retention);
         properties.setProperty("retention", retention);
         properties.setProperty("cacheSize", cacheSize);
         return properties;
     }
-
-    /*@Bean
-    public Long retention() {
-        return Long.valueOf(properties().getProperty("retention"));
-    }*/
 }

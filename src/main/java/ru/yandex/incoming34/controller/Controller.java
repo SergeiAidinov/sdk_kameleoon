@@ -1,6 +1,8 @@
 package ru.yandex.incoming34.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.JsonSerializable;
+import com.fasterxml.jackson.databind.node.NullNode;
 import io.swagger.v3.oas.annotations.Operation;
 import lombok.AllArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,15 +24,16 @@ public class Controller {
 
     private final WeatherProvider weatherProvider;
     private final ValidationService validationService;
-    private final InMemoryRepository inMemoryRepository;
+
 
     @GetMapping(value = "/new_weather_report")
     @Operation(description = "Эндпойнт, вызываемый гипотетическим Сервисом А, и принимающий от него сообщения для последующей обработки Адаптером.")
     public JsonNode handleMessageFromServiceA(String cityName) {
-        Optional<JsonNode> weatherNodeOptional = inMemoryRepository.getIfActual(cityName);
-        if (weatherNodeOptional.isPresent()) return weatherNodeOptional.get();
+
         Optional<JsonNode> responseOptional = weatherProvider.requestWeather(cityName);
-        if (responseOptional.isPresent()) return responseOptional.get();
-        throw new RuntimeException(sdkKameleoonErrors.get("NO_DATA"));
+        if (responseOptional.isPresent()) {
+            return responseOptional.get();
+        } else
+            throw new RuntimeException(sdkKameleoonErrors.get("NO_DATA"));
     }
 }
