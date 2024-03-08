@@ -2,6 +2,7 @@ package ru.yandex.incoming34.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -24,9 +25,8 @@ public class Controller {
 
 
     @GetMapping(value = "/new_weather_report")
-    @Operation(description = "Эндпойнт, вызываемый гипотетическим Сервисом А, и принимающий от него сообщения для последующей обработки Адаптером.")
-    public JsonNode handleMessageFromServiceA(String cityName) {
-
+    @Operation(description = "Endpoint accepts the name of the city and return information about the weather at the current moment.")
+    public JsonNode handleMessageFromServiceA(@Schema(example = "London") String cityName) {
         Optional<JsonNode> responseOptional = weatherProvider.requestWeather(cityName);
         if (responseOptional.isPresent()) {
             return responseOptional.get();

@@ -28,32 +28,40 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
 
     @Override
     public Optional<JsonNode> requestWeather(String cityName) {
-        Optional<JsonNode> weatherNodeOptional = inMemoryRepository.getIfActual(cityName);
-        if (weatherNodeOptional.isPresent()) return Optional.of(weatherNodeOptional.get());
-        HttpURLConnection connection = prepareConnectionByCityName(cityName);
-        InputStream responseStream;
-        JsonNode node;
-        Pair<String, String> coordinates;
+        Optional<JsonNode> weatherOptional = inMemoryRepository.getIfActual(cityName);
+        if (weatherOptional.isPresent()) return weatherOptional;
+        Pair<String, String> coordinatesByCityName = findCoordinatesByCityName(cityName);
+        return findWeatherByCoordinates(coordinatesByCityName, cityName);
+    }
+
+    Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates, String cityName) {
+        HttpURLConnection connection = prepareConnectionByCoordinates(coordinates);
         try {
-            responseStream = connection.getInputStream();
-            node = objectMapper.readTree(responseStream);
-            if (node.isEmpty()) {
-                throw new RuntimeException();
-            }
-            coordinates = Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
-            connection = prepareConnectionByCoordinates(coordinates);
-            responseStream = connection.getInputStream();
-            node = objectMapper.readTree(responseStream);
-        } catch (RuntimeException runtimeException) {
-            throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
-        }
-        catch (Exception exception) {
+            InputStream responseStream = connection.getInputStream();
+            JsonNode node = objectMapper.readTree(responseStream);
+            inMemoryRepository.putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node, coordinates));
+            return Optional.ofNullable(node);
+        } catch (Exception e) {
             throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
         } finally {
             connection.disconnect();
         }
-        inMemoryRepository.putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node, coordinates));
-        return Optional.ofNullable(node);
+    }
+
+    private Pair<String, String> findCoordinatesByCityName(String cityName) {
+        HttpURLConnection connection = prepareConnectionByCityName(cityName);
+        try {
+            InputStream responseStream = connection.getInputStream();
+            JsonNode node = objectMapper.readTree(responseStream);
+            if (node.isEmpty()) {
+                throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
+            }
+            return Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
+        } catch (Exception e) {
+            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
+        } finally {
+            connection.disconnect();
+        }
     }
 
     private HttpURLConnection prepareConnectionByCoordinates(Pair<String, String> coordinates) {
@@ -73,10 +81,9 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
     }
 
     private HttpURLConnection getHttpURLConnection(String request) {
-        URL url;
         HttpURLConnection connection;
         try {
-            url = new URL(request);
+            URL url = new URL(request);
             connection = (HttpURLConnection) url.openConnection();
         } catch (IOException e) {
             throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
