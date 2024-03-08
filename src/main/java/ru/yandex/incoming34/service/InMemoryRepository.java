@@ -1,13 +1,18 @@
 package ru.yandex.incoming34.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import ru.yandex.incoming34.exception.SdkKameleoonException;
 import ru.yandex.incoming34.structures.CacheMode;
+import ru.yandex.incoming34.structures.SdkKameleoonErrors;
 import ru.yandex.incoming34.structures.WeatherInfo;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,29 +21,86 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.util.stream.Collectors.groupingBy;
+import static ru.yandex.incoming34.utils.Utils.getHttpURLConnection;
 
 @Service
 @RequiredArgsConstructor
 public class InMemoryRepository {
 
     private final Properties properties;
-    private final WeatherProvider weatherProvider;
+    private final CoordinateService coordinateService;
+    //private final WeatherProvider weatherProvider;
+    private final ObjectMapper objectMapper = new ObjectMapper();
     private final ConcurrentHashMap<String, WeatherInfo> cachedRepo = new ConcurrentHashMap<>();
     private final Logger logger = Logger.getLogger(InMemoryRepository.class.getSimpleName());
 
-    public Optional<JsonNode> getIfActual(String cityName) {
+    public Optional<JsonNode> getActualWeather(String cityName) {
         WeatherInfo weatherInfo = cachedRepo.get(cityName);
         if (Objects.nonNull(weatherInfo)) {
             if (weatherInfo.getLocalDateTime().isAfter(LocalDateTime.now().minusMinutes(Integer.valueOf(properties.getProperty("retention"))))) {
                 logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo.toString());
                 return Optional.of(weatherInfo.getJsonNode());
             } else {
-                WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
-                logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
+                return actualizeInfoForCity(cityName);
             }
+        } else {
+          return addInfoOfNewCity(cityName);
         }
-        return Optional.empty();
+        //return Optional.empty();
     }
+
+    private Optional<JsonNode> actualizeInfoForCity(String cityName) {
+        WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
+        logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
+        Optional<JsonNode> nodeOptional = coordinateService.findWeatherByCoordinates(removedWeatherInfo.getCordinates(), cityName);
+        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCordinates()));
+        return nodeOptional;
+    }
+
+    private Optional<JsonNode> addInfoOfNewCity(String cityName){
+        Pair<String, String> coordinatesByCityName = findCoordinatesByCityName(cityName);
+        Optional<JsonNode> node = coordinateService.findWeatherByCoordinates(coordinatesByCityName, cityName);
+        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), node.get(), coordinatesByCityName));
+        return node;
+    }
+
+    private Pair<String, String> findCoordinatesByCityName(String cityName) {
+        HttpURLConnection connection = prepareConnectionByCityName(cityName);
+        try {
+            InputStream responseStream = connection.getInputStream();
+            JsonNode node = objectMapper.readTree(responseStream);
+            if (node.isEmpty()) {
+                throw new SdkKameleoonException(SdkKameleoonErrors.CITY_NOT_FOUND, cityName);
+            }
+            return Pair.of(String.valueOf(node.get(0).get("lat")), String.valueOf(node.get(0).get("lon")));
+        } catch (Exception e) {
+            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
+        } finally {
+            connection.disconnect();
+        }
+    }
+
+    private HttpURLConnection prepareConnectionByCityName(String cityName) {
+        String request = new StringBuilder(properties.getProperty("apiHttpCoordinates"))
+                .append(cityName)
+                .append("&limit=1")
+                .append("&appid=")
+                .append(properties.getProperty("apiKey"))
+                .toString();
+        return getHttpURLConnection(request);
+    }
+
+   /* private HttpURLConnection getHttpURLConnection(String request) {
+        HttpURLConnection connection;
+        try {
+            URL url = new URL(request);
+            connection = (HttpURLConnection) url.openConnection();
+        } catch (IOException e) {
+            throw new SdkKameleoonException(SdkKameleoonErrors.WEATHER_SERVICE_UNAVAILABLE);
+        }
+        connection.setRequestProperty("accept", "application/json");
+        return connection;
+    }*/
 
     public void putWeatherInfo(String cityName, WeatherInfo weatherInfo) {
         cachedRepo.put(cityName, weatherInfo);
@@ -82,7 +144,7 @@ public class InMemoryRepository {
         for (String cityName : cachedRepo.keySet()) {
             Pair<String, String> coordinates = cachedRepo.get(cityName).getCordinates();
             if (Objects.nonNull(coordinates)) {
-               // Optional<JsonNode> node = weatherProvider.getWeatherProvider().findWeatherByCoordinates(coordinates, cityName);
+                //Optional<JsonNode> node =
             }
         }
     }
