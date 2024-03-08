@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import ru.yandex.incoming34.structures.CacheMode;
 import ru.yandex.incoming34.structures.Languages;
 import ru.yandex.incoming34.structures.Metrics;
 
@@ -43,6 +44,10 @@ public class Config {
                     .map(unit -> unit.name()).collect(Collectors.toList())
                     .contains(properties.getProperty("app.units")))
                 throw new RuntimeException("Unsupported measure unit: " + properties.getProperty("app.units"));
+            if (!Arrays.stream(CacheMode.values()).toList().stream()
+                    .map(unit -> unit.name()).collect(Collectors.toList())
+                    .contains(properties.getProperty("app.cache.mode")))
+                throw new RuntimeException("Unsupported cache mode: " + properties.getProperty("app.cache.mode"));
         } catch (RuntimeException runtimeException) {
             logger.log(Level.INFO, "Configuration error: " + runtimeException.getMessage());
             System.exit(1);

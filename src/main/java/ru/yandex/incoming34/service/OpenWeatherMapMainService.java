@@ -53,9 +53,7 @@ public class OpenWeatherMapMainService implements MainService {
     private Optional<JsonNode> actualizeInfoForCity(String cityName) {
         WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
         logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
-        Optional<JsonNode> nodeOptional = weatherProviderByCoordinates.findWeatherByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
-        putWeatherInfo(cityName, new WeatherInfo(LocalDateTime.now(), nodeOptional.get(), removedWeatherInfo.getCoordinates()));
-        return nodeOptional;
+        return actualizeInfoByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
     }
 
     private Optional<JsonNode> actualizeInfoByCoordinates(Pair<String, String> coordinates, String cityName) {
@@ -131,11 +129,7 @@ public class OpenWeatherMapMainService implements MainService {
             fixedDelayString = "${app.cache.retention.timeInMinutes}",
             timeUnit = TimeUnit.MINUTES)
     private void refreshCache() {
-        if (properties.getProperty("app.cache.mode").equals(CacheMode.on_demand.name())) {
-            removeOldWeatherInfo();
-        } else if (properties.getProperty("app.cache.mode").equals(CacheMode.polling.name())) {
-            actualizeCache();
-        }
+            if (properties.getProperty("app.cache.mode").equals(CacheMode.polling.name())) actualizeCache();
     }
 
     private void actualizeCache() {
@@ -145,18 +139,6 @@ public class OpenWeatherMapMainService implements MainService {
             if (Objects.nonNull(coordinates)) actualizeInfoByCoordinates(coordinates, cityName);
         }
         logger.log(Level.INFO, "Cache actualization finished: " + LocalDateTime.now());
-    }
-
-    private void removeOldWeatherInfo() {
-        logger.log(Level.INFO, "Cache eviction started: " + LocalDateTime.now());
-        for (Map.Entry<String, WeatherInfo> entry : cachedRepo.entrySet()) {
-            if (entry.getValue().getLocalDateTime()
-                    .isBefore(LocalDateTime.now().minusMinutes(Integer.parseInt(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
-                WeatherInfo removedWeatherInfo = cachedRepo.remove(entry.getKey());
-                logger.log(Level.INFO, "Removed from cache expired record: " + entry.getKey() + " " + removedWeatherInfo.toString());
-            }
-        }
-        logger.log(Level.INFO, "Cache eviction finished: " + LocalDateTime.now());
     }
 
 }
