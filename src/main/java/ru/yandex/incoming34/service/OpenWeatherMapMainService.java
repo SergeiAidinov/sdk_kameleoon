@@ -38,22 +38,22 @@ public class OpenWeatherMapMainService implements MainService {
     @Override
     public Optional<JsonNode> getActualWeather(String cityName) {
         WeatherInfo weatherInfo = cachedRepo.get(cityName);
-        if (Objects.nonNull(weatherInfo)) {
-            if (weatherInfo.getLocalDateTime().isAfter(LocalDateTime.now().minusMinutes(Integer.parseInt(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
+        if (Objects.isNull(weatherInfo)) return addInfoOfNewCity(cityName);
+        if (properties.getProperty("app.cache.mode").equals(CacheMode.polling.name())) {
+            // polling mode
+            logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo);
+            return Optional.of(weatherInfo.getJsonNode());
+        } else {
+            // on_demand mode
+            if (weatherInfo.getLocalDateTime()
+                    .isAfter(LocalDateTime.now()
+                            .minusMinutes(Integer.parseInt(properties.getProperty("app.cache.retention.timeInMinutes"))))) {
                 logger.log(Level.INFO, "Retrieved from cache: " + cityName + " " + weatherInfo);
                 return Optional.of(weatherInfo.getJsonNode());
             } else {
-                return actualizeInfoForCity(cityName);
+                return actualizeInfoByCoordinates(weatherInfo.getCoordinates(), cityName);
             }
-        } else {
-            return addInfoOfNewCity(cityName);
         }
-    }
-
-    private Optional<JsonNode> actualizeInfoForCity(String cityName) {
-        WeatherInfo removedWeatherInfo = cachedRepo.remove(cityName);
-        logger.log(Level.INFO, "Removed from cache: " + cityName + " " + removedWeatherInfo.toString());
-        return actualizeInfoByCoordinates(removedWeatherInfo.getCoordinates(), cityName);
     }
 
     private Optional<JsonNode> actualizeInfoByCoordinates(Pair<String, String> coordinates, String cityName) {
@@ -129,7 +129,7 @@ public class OpenWeatherMapMainService implements MainService {
             fixedDelayString = "${app.cache.retention.timeInMinutes}",
             timeUnit = TimeUnit.MINUTES)
     private void refreshCache() {
-            if (properties.getProperty("app.cache.mode").equals(CacheMode.polling.name())) actualizeCache();
+        if (properties.getProperty("app.cache.mode").equals(CacheMode.polling.name())) actualizeCache();
     }
 
     private void actualizeCache() {
