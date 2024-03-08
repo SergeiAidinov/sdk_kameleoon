@@ -34,7 +34,7 @@ public class OpenWeatherMapWeatherProvider implements WeatherProvider {
         return findWeatherByCoordinates(coordinatesByCityName, cityName);
     }
 
-    Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates, String cityName) {
+    public Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates, String cityName) {
         HttpURLConnection connection = prepareConnectionByCoordinates(coordinates);
         try {
             InputStream responseStream = connection.getInputStream();

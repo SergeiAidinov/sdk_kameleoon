@@ -20,8 +20,10 @@ public class Config {
     private String apiHttpWeather;
     @Value("${app.cache.retention.timeInMinutes}")
     private String retention;
-    @Value("${app.cache.retention.size}")
+    @Value("${app.cache.size}")
     private String cacheSize;
+    @Value("${app.cache.mode}")
+    private String cacheMode;
 
 
     @Bean
@@ -32,6 +34,7 @@ public class Config {
         properties.setProperty("apiHttpWeather", apiHttpWeather);
         properties.setProperty("retention", retention);
         properties.setProperty("cacheSize", cacheSize);
+        properties.setProperty("cacheMode", cacheMode);
         return properties;
     }
 }
