@@ -8,15 +8,16 @@ import ru.yandex.incoming34.structures.CacheMode;
 import ru.yandex.incoming34.structures.Languages;
 import ru.yandex.incoming34.structures.Metrics;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.*;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableScheduling
@@ -28,9 +29,7 @@ public class Config {
 
     @Bean
     public Properties properties() throws IOException {
-
-        final String propertiesFileName = "src/main/resources/application.properties";
-        final File file = new File(propertiesFileName);
+        final File file = findFile("application.properties");
         final InputStream inputStream = new FileInputStream(file);
         final Properties properties = new Properties();
         properties.load(inputStream);
@@ -53,5 +52,17 @@ public class Config {
             System.exit(1);
         }
         return properties;
+    }
+
+    private File findFile(String fileName) throws FileNotFoundException {
+        try {
+            Stream<Path> walkStream = Files.walk(Paths.get(System.getProperty("user.dir")));
+            List<Path> fileList = walkStream.filter(p -> p.toFile().isFile()).collect(Collectors.toList());
+            for (Path path : fileList)
+                if (path.getFileName().endsWith(fileName)) return new File(path.toString());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        throw new FileNotFoundException(fileName);
     }
 }
