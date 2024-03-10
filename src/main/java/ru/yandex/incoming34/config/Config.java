@@ -9,15 +9,13 @@ import ru.yandex.incoming34.structures.Languages;
 import ru.yandex.incoming34.structures.Metrics;
 
 import java.io.*;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Configuration
 @EnableScheduling
@@ -35,16 +33,16 @@ public class Config {
         properties.load(inputStream);
         try {
             if (!Arrays.stream(Languages.values()).toList().stream()
-                    .map(language -> language.name()).collect(Collectors.toList())
+                    .map(Enum::name).toList()
                     .contains(properties.getProperty("app.language")))
                 throw new RuntimeException("Unsupported language: " + properties.getProperty("app.language"));
 
             if (!Arrays.stream(Metrics.values()).toList().stream()
-                    .map(unit -> unit.name()).collect(Collectors.toList())
+                    .map(Enum::name).toList()
                     .contains(properties.getProperty("app.units")))
                 throw new RuntimeException("Unsupported measure unit: " + properties.getProperty("app.units"));
             if (!Arrays.stream(CacheMode.values()).toList().stream()
-                    .map(unit -> unit.name()).collect(Collectors.toList())
+                    .map(Enum::name).toList()
                     .contains(properties.getProperty("app.cache.mode")))
                 throw new RuntimeException("Unsupported cache mode: " + properties.getProperty("app.cache.mode"));
         } catch (RuntimeException runtimeException) {
@@ -56,9 +54,7 @@ public class Config {
 
     private File findFile(String fileName) throws FileNotFoundException {
         try {
-            Stream<Path> walkStream = Files.walk(Paths.get(System.getProperty("user.dir")));
-            List<Path> fileList = walkStream.filter(p -> p.toFile().isFile()).collect(Collectors.toList());
-            for (Path path : fileList)
+            for (Path path : Files.walk(Paths.get(System.getProperty("user.dir"))).filter(p -> p.toFile().isFile()).toList())
                 if (path.getFileName().endsWith(fileName)) return new File(path.toString());
         } catch (IOException e) {
             throw new RuntimeException(e);
