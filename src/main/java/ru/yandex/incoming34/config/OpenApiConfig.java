@@ -1,4 +1,4 @@
-package ru.yandex.incoming34.test_task_for_employment.config;
+package ru.yandex.incoming34.config;
 
 import com.fasterxml.jackson.databind.jsonschema.JsonSchema;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
@@ -6,7 +6,9 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.PropertySource;
 
 import java.io.File;
 import java.util.Objects;
@@ -23,8 +25,10 @@ public class OpenApiConfig {
 
     @Bean
     Info info() {
-        return new Info().title("Тестовое задание middle Java. Автор: Айдинов Сергей")
-                .description("Информация о погоде запрашивается с сайта https://openweathermap.org/")
+        return new Info().title("Software development kit (SDK) that can be used by " +
+                        "other developers to easily access a weather API and retrieve weather data for a given location." +
+                        " Author: Sergei Aidinov")
+                .description("Wheather info provider: https://openweathermap.org/")
                 .version(componentVersion()).contact(contact());
     }
 
@@ -35,13 +39,13 @@ public class OpenApiConfig {
 
     @SuppressWarnings("deprecation")
     private String componentVersion() {
-        String propertiesFileName = "pom.xml";
-        String componentVersion = "Версия не указана";
+        final String propertiesFileName = "pom.xml";
+        String componentVersion = "Version is not specified";
         File file = new File(propertiesFileName);
-        XmlMapper xmlMapper = new XmlMapper();
+        final XmlMapper xmlMapper = new XmlMapper();
         try {
-            JsonSchema jsonSchema = xmlMapper.generateJsonSchema(String.class);
-            JsonSchema json = xmlMapper.readValue(file, jsonSchema.getClass());
+            final JsonSchema jsonSchema = xmlMapper.generateJsonSchema(String.class);
+            final JsonSchema json = xmlMapper.readValue(file, jsonSchema.getClass());
             componentVersion = Objects.nonNull(json.getSchemaNode().get("version"))
                     ? String.valueOf(json.getSchemaNode().get("version")).replaceAll("\"", "")
                     : componentVersion;

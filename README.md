@@ -3,27 +3,71 @@
 ![Debian](https://img.shields.io/badge/Debian-D70A53?style=for-the-badge&logo=debian&logoColor=white)
 ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000.svg?style=for-the-badge&logo=intellij-idea&logoColor=white)
 
-Сведения о погоде запрашиваются с сайта https://openweathermap.org
-Данный сайт был выбран в качестве поставщика сведений, поскольку он бесплатный, а также не требует создания проекта на сайте.
+# Contents
+ - [Description](#description) 
+ - [Deployment](#deployment) 
+ - [Properties](#properties)
 
-Поскольку задание предполагает возможность расширения поддерживаемых сервисов погоды, функционал получения погоды вынесен в отдельный класс, который инжектится через интерфейс с использованием аннотации @ConditionalOnProperty
+## Description
+A user interacts with application via Swagger, which opens at http://localhost:8080/swagger-ui/index.html
 
-Взаимодействие пользователя с приложением осуществляется через Swagger, который открывается по адресу: http://localhost:8080/swagger-ui/index.html
-Версия приложения «подтягивается» из конфигурационного файла.
+![Screenshot](https://github.com/SergeiAidinov/images/blob/main/Screenshot.png?raw=true)
 
-В приложении имеются два Контроллера и два Сервиса: MainService.java и ValidationService.java
 
-ValidationService.java осуществляет проверку правильности указания пользователем  координат с использованием регулярных выражений, а также реализует логику проверки пользовательского ввода, предусмотренную техническим заданием касательно используемого языка и наличия сообщения. Выбор допустимых языков из перечня [ru, en, es] вынесен в конфигурационный файл.
+## Deployment
+For deployment execute the next commands: 
 
-Исключения перехватываются в контроллере с помощью ExceptionHandler.
+- clone the repository: git clone https://github.com/SergeiAidinov/sdk_kameleoon.git
 
-Контроллер Controller.java предоставляет эндпойнт, который должен вызываться Сервисом А для передачи в адаптер неадаптированного сообщения. Это делается пользователем через Swagger. 
+- change the current directory: cd sdk_kameleoon/
 
-Контроллер DummyServiceBController.java имитирует контроллер Сервиса Б. Он содержит эндпойнт, который должен вызываться Адаптером для передачи Сервису Б уже адаптированного сообщения, обогащенного сведениями о погоде. Данный эндпойнт вызывается адаптером и служит исключительно для демонстрации обращения к удаленному ресурсу через RestTemplate. Полученное от адаптера сообщение выводится в консоль. 
+- create a jar file: mvn package
 
-В конфигурационном файле задается последовательность нод JSONа. В этой последовательности осуществляется поиск ноды с температурой. Это необходимо для того, чтобы избежать внесения изменений в код в случае изменения структуры ответа Сервиса, сообщающего погоду. Логика поиска интересующей ноды реализована в утильном классе. 
+- change the current directory: cd target
 
-Логирование осуществляется как в файл, так и путем вывода сообщений в консоль.
+- start application: java -jar sdk_kameleoon-0.0.1-SNAPSHOT.jar 
 
-Тестирование не делал, т.к. техзаданием оно не предусмотрено, к тому же неизвестно заранее, какую температуру сообщит Сервис погоды. Поэтому отсутствует возможность проверить правильность ответа. 
+- stop application at Linux operating system: pkill -f sdk_kameleoon-0.0.1-SNAPSHOT.jar
+
+## Properties
+
+| Property Name                     | Description                                                                                                                                                                                                                           |
+|-----------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| app.apiKey                        | API KEY for using weather API                                                                                                                                                                                                         |
+| app.cache.retention.timeInMinutes | Time (in minutes) between cache updates                                                                                                                                                                                               |
+| app.cache.size                    | Max quantity of the cities, whose weather reports kept in cache                                                                                                                                                                       |
+| app.cache.mode                    | Mode of cache update: <b>on_demand</b> (when user requests weather report) or <b>polling</b> (in equal periods, defined with property 'app.cache.retention.timeInMinutes'                                                             |
+| app.language                      | language of weather reports:  af, al, ar, az, bg, ca, cz, da, de, el, en, eu, fa, fi, fr, gl, he, hi, hr, hu, id, it, ja, kr, la, lt, mk, no, nl, pl, pt, pt_br, ro, ru, sv, sk, sl, sp, es, sr, th, tr, ua, uk, vi, zh_cn, zh_tw, zu |
+| app.units                         | System of units of measurement: <br/>standard, metric, imperial                                                                                                                                                                       |
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

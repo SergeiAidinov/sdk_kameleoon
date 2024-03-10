@@ -1,7 +1,8 @@
-package ru.yandex.incoming34.test_task_for_employment;
+package ru.yandex.incoming34;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
 import java.util.TimeZone;
 

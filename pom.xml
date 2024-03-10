@@ -10,12 +10,16 @@
     </parent>
     <groupId>ru.yandex.incoming34</groupId>
     <artifactId>sdk_kameleoon</artifactId>
+    <packaging>jar</packaging>
     <version>0.0.1-SNAPSHOT</version>
-    <name>adapter</name>
+    <name>sdk_kameleoon</name>
     <description>Test task for employment</description>
     <properties>
         <java.version>17</java.version>
+        <compile.version>17</compile.version>
+        <app.main.class>ru.yandex.incoming34.SdkKameleoon</app.main.class>
         <springdoc.version>2.2.0</springdoc.version>
+        <start-class>org.apache.maven.plugins.shade.resource.ResourceTransformer</start-class>
     </properties>
     <dependencies>
         <dependency>
@@ -70,19 +74,42 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-autoconfigure</artifactId>
-        </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>
-                <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-maven-plugin</artifactId>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-dependencies</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-dependencies</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>
+                                ${project.build.directory}/libs
+                            </outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifest>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>libs/</classpathPrefix>
+                            <mainClass>
+                                ru.yandex.incoming34.SdkKameleoon
+                            </mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
             </plugin>
         </plugins>
     </build>
-
 </project>
