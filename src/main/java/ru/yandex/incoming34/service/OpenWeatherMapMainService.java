@@ -70,7 +70,7 @@ public class OpenWeatherMapMainService implements MainService {
         return node;
     }
 
-    public Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates) {
+    private Optional<JsonNode> findWeatherByCoordinates(Pair<String, String> coordinates) {
         HttpURLConnection connection = prepareConnectionByCoordinates(coordinates);
         try {
             InputStream responseStream = connection.getInputStream();
@@ -127,7 +127,7 @@ public class OpenWeatherMapMainService implements MainService {
         return getHttpURLConnection(request);
     }
 
-    public void putWeatherInfo(String cityName, WeatherInfo weatherInfo) {
+    private void putWeatherInfo(String cityName, WeatherInfo weatherInfo) {
         cachedRepo.put(cityName, weatherInfo);
         logger.log(Level.INFO, "Put into cache: " + cityName + " " + weatherInfo);
         removeExceedingRecords();
@@ -168,7 +168,7 @@ public class OpenWeatherMapMainService implements MainService {
         }
     }
 
-    public HttpURLConnection getHttpURLConnection(String request) {
+    private HttpURLConnection getHttpURLConnection(String request) {
         HttpURLConnection connection;
         try {
             URL url = new URL(request);
