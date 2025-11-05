@@ -46,7 +46,7 @@ public class OpenApiConfig {
         final String propertiesFileName = "pom.xml";
         String componentVersion = "Version is not specified";
         List<Path> pathList = null;
-        try (Stream<Path> files = Files.walk(Paths.get(System.getenv().get("PWD")))) {
+        try (Stream<Path> files = Files.walk(Paths.get(System.getenv().get("PWD")).getParent())) {
             pathList = files
                     .filter(f -> f.getFileName().toString().equals(propertiesFileName))
                     .toList();
