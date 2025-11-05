@@ -20,6 +20,8 @@
         <app.main.class>ru.yandex.incoming34.SdkKameleoon</app.main.class>
         <springdoc.version>2.2.0</springdoc.version>
         <start-class>org.apache.maven.plugins.shade.resource.ResourceTransformer</start-class>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
     </properties>
     <dependencies>
         <dependency>
