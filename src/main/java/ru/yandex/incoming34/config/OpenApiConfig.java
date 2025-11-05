@@ -44,7 +44,7 @@ public class OpenApiConfig {
     @SuppressWarnings("deprecation")
     private String componentVersion() {
         final String propertiesFileName = "pom.xml";
-        String componentVersion = "Версия не указана";
+        String componentVersion = "Version is not specified";
         List<Path> pathList = null;
         try (Stream<Path> files = Files.walk(Paths.get(System.getenv().get("PWD")))) {
             pathList = files
